@@ -15,6 +15,7 @@ from lib_tasks import Task
 
 
 logger = logging.getLogger(__name__)
+MAX_OPENCLAW_MESSAGE_CHARS = 4000
 
 
 def slugify_model(model_id: str) -> str:
@@ -43,10 +44,13 @@ def _get_agent_workspace(agent_id: str) -> Path | None:
             return None
 
         # Parse the agent list output to find workspace
+        # OpenClaw normalizes colons to dashes in agent names, so check both.
+        normalized_id = agent_id.replace(":", "-")
         lines = list_result.stdout.split("\n")
         found_agent = False
         for line in lines:
-            if line.strip().startswith(f"- {agent_id}"):
+            stripped = line.strip()
+            if stripped.startswith(f"- {agent_id}") or stripped.startswith(f"- {normalized_id}"):
                 found_agent = True
             elif found_agent and "Workspace:" in line:
                 workspace_str = line.split("Workspace:")[1].strip()
@@ -64,7 +68,12 @@ def _get_agent_workspace(agent_id: str) -> Path | None:
 
 
 def ensure_agent_exists(agent_id: str, model_id: str, workspace_dir: Path) -> bool:
-    """Ensure the OpenClaw agent exists. Returns True if created."""
+    """Ensure the OpenClaw agent exists with the correct workspace.
+
+    If the agent already exists but points to a different workspace, it is
+    deleted and recreated so that the new workspace takes effect.
+    Returns True if the agent was (re)created.
+    """
     workspace_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -82,6 +91,8 @@ def ensure_agent_exists(agent_id: str, model_id: str, workspace_dir: Path) -> bo
         # Check for exact agent ID match — avoid substring false positives
         # (e.g. "bench-foo-4" matching "bench-foo-4-5" in the output).
         # Output format is "- <agent_id>" or "- <agent_id> (default)" per line.
+        # OpenClaw normalizes colons to dashes in directory/display names, so
+        # also check the normalized form.
         existing_agents = set()
         for line in list_result.stdout.splitlines():
             line = line.strip()
@@ -90,9 +101,27 @@ def ensure_agent_exists(agent_id: str, model_id: str, workspace_dir: Path) -> bo
                 name_part = line[2:].split()[0] if line[2:].strip() else ""
                 if name_part:
                     existing_agents.add(name_part)
-        if agent_id in existing_agents:
-            logger.info("Agent %s already exists", agent_id)
-            return False
+        normalized_id = agent_id.replace(":", "-")
+        if agent_id in existing_agents or normalized_id in existing_agents:
+            # Agent exists — check if workspace matches
+            current_workspace = _get_agent_workspace(agent_id)
+            if current_workspace is not None and current_workspace.resolve() == workspace_dir.resolve():
+                logger.info("Agent %s already exists with correct workspace", agent_id)
+                return False
+            # Workspace is stale or unknown — delete and recreate
+            delete_name = normalized_id if normalized_id in existing_agents else agent_id
+            logger.info(
+                "Agent %s exists with stale workspace (%s != %s), recreating",
+                agent_id,
+                current_workspace,
+                workspace_dir,
+            )
+            subprocess.run(
+                ["openclaw", "agents", "delete", delete_name, "--force"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
     normalized_model = normalize_model_id(model_id)
     logger.info("Creating OpenClaw agent %s", agent_id)
@@ -126,16 +155,18 @@ def ensure_agent_exists(agent_id: str, model_id: str, workspace_dir: Path) -> bo
 
 def cleanup_agent_sessions(agent_id: str) -> None:
     """Remove stored session transcripts for an agent to avoid unbounded growth."""
-    sessions_dir = Path.home() / ".openclaw" / "agents" / agent_id / "sessions"
+    agent_dir = _get_agent_store_dir(agent_id)
+    sessions_dir = agent_dir / "sessions"
     if not sessions_dir.exists():
         return
     removed = 0
-    for path in sessions_dir.glob("*.jsonl"):
-        try:
-            path.unlink()
-            removed += 1
-        except OSError as exc:
-            logger.warning("Failed to remove session transcript %s: %s", path, exc)
+    for pattern in ("*.jsonl", "*.jsonl.lock"):
+        for path in sessions_dir.glob(pattern):
+            try:
+                path.unlink()
+                removed += 1
+            except OSError as exc:
+                logger.warning("Failed to remove session file %s: %s", path, exc)
     sessions_store = sessions_dir / "sessions.json"
     if sessions_store.exists():
         try:
@@ -203,9 +234,12 @@ def _resolve_session_id_from_store(agent_id: str) -> str | None:
     if not isinstance(sessions_payload, dict):
         return None
 
+    normalized_id = agent_id.replace(":", "-")
     preferred_keys = [
         f"agent:{agent_id}:main",
         f"agent:{agent_id}:default",
+        f"agent:{normalized_id}:main",
+        f"agent:{normalized_id}:default",
     ]
     for key in preferred_keys:
         entry = sessions_payload.get(key)
@@ -455,33 +489,61 @@ def run_openclaw_prompt(
     exit_code = -1
     timed_out = False
 
-    try:
-        result = subprocess.run(
-            [
-                "openclaw",
-                "agent",
-                "--agent",
-                agent_id,
-                "--session-id",
-                session_id,
-                "--message",
-                prompt,
-            ],
-            capture_output=True,
-            text=True,
-            cwd=str(workspace),
-            timeout=timeout_seconds,
-            check=False,
-        )
-        stdout = result.stdout
-        stderr = result.stderr
-        exit_code = result.returncode
-    except subprocess.TimeoutExpired as exc:
-        timed_out = True
-        stdout = exc.stdout or ""
-        stderr = exc.stderr or ""
-    except FileNotFoundError as exc:
-        stderr = f"openclaw command not found: {exc}"
+    chunks = [
+        prompt[i : i + MAX_OPENCLAW_MESSAGE_CHARS]
+        for i in range(0, max(1, len(prompt)), MAX_OPENCLAW_MESSAGE_CHARS)
+    ]
+    if len(chunks) > 1:
+        total_chunks = len(chunks)
+        chunks = [
+            (
+                f"You are receiving a long prompt in {total_chunks} parts.\n"
+                f"Ignore and do not respond until the final part.\n\n"
+                f"Part 1/{total_chunks}:\n{chunks[0]}"
+            )
+        ] + [
+            (
+                f"Part {i + 2}/{total_chunks}:\n{chunks[i + 1]}"
+                if i + 2 < total_chunks
+                else (
+                    f"Part {i + 2}/{total_chunks} (final):\n{chunks[i + 1]}\n"
+                    "All parts received. Proceed with final judgment now."
+                )
+            )
+            for i in range(0, total_chunks - 1)
+        ]
+    for chunk in chunks:
+        try:
+            result = subprocess.run(
+                [
+                    "openclaw",
+                    "agent",
+                    "--agent",
+                    agent_id,
+                    "--session-id",
+                    session_id,
+                    "--message",
+                    chunk,
+                ],
+                capture_output=True,
+                text=True,
+                cwd=str(workspace),
+                timeout=timeout_seconds,
+                check=False,
+            )
+            stdout = result.stdout
+            stderr = result.stderr
+            exit_code = result.returncode
+            if result.returncode not in (0, -1) and not timed_out:
+                break
+        except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            stdout = exc.stdout or ""
+            stderr = exc.stderr or ""
+            break
+        except FileNotFoundError as exc:
+            stderr = f"openclaw command not found: {exc}"
+            break
 
     transcript = _load_transcript(agent_id, session_id, start_time)
     execution_time = time.time() - start_time

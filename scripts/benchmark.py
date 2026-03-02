@@ -29,7 +29,7 @@ from lib_agent import (
     execute_openclaw_task,
     slugify_model,
 )
-from lib_grading import grade_task
+from lib_grading import GradeResult, grade_task
 from lib_tasks import Task, TaskLoader
 
 
@@ -378,15 +378,50 @@ def main():
                 runs_per_task,
             )
             logger.info("%s", "=" * 80)
-            result = execute_openclaw_task(
-                task=task,
-                agent_id=agent_id,
-                model_id=args.model,
-                run_id=f"{run_id}-{run_index + 1}",
-                timeout_multiplier=args.timeout_multiplier,
-                skill_dir=skill_dir,
-            )
-            grade = grade_task(task=task, execution_result=result, skill_dir=skill_dir)
+            execution_error = None
+            try:
+                result = execute_openclaw_task(
+                    task=task,
+                    agent_id=agent_id,
+                    model_id=args.model,
+                    run_id=f"{run_id}-{run_index + 1}",
+                    timeout_multiplier=args.timeout_multiplier,
+                    skill_dir=skill_dir,
+                )
+            except Exception as exc:
+                execution_error = str(exc)
+                logger.warning(
+                    "Task execution failed for %s, continuing: %s", task.task_id, exc
+                )
+                result = {
+                    "agent_id": agent_id,
+                    "task_id": task.task_id,
+                    "status": "error",
+                    "transcript": [],
+                    "usage": {},
+                    "workspace": "",
+                    "exit_code": -1,
+                    "timed_out": False,
+                    "execution_time": 0.0,
+                    "stdout": "",
+                    "stderr": execution_error,
+                }
+            try:
+                grade = grade_task(task=task, execution_result=result, skill_dir=skill_dir)
+            except Exception as exc:
+                if execution_error:
+                    note = f"Execution failed: {execution_error}; Grading failed: {exc}"
+                else:
+                    note = f"Grading failed: {exc}"
+                logger.warning("Task grading failed for %s, continuing: %s", task.task_id, exc)
+                grade = GradeResult(
+                    task_id=task.task_id,
+                    score=0.0,
+                    max_score=1.0,
+                    grading_type=task.grading_type,
+                    breakdown={},
+                    notes=note,
+                )
             task_grades.append(grade)
             results.append(result)
 
