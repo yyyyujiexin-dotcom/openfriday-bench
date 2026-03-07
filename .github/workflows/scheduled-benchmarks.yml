@@ -123,7 +123,8 @@ jobs:
               "defaults": {
                 "model": {
                   "primary": "$BENCHMARK_MODEL"
-                }
+                },
+                "workspace": "/tmp/pinchbench-workspace"
               }
             },
             "auth": {
@@ -136,6 +137,25 @@ jobs:
             }
           }
           EOF
+          
+          # Create a minimal workspace for benchmarking - OpenClaw copies default
+          # workspace files (AGENTS.md, SOUL.md, etc.) that tell the agent to
+          # respond with NO_REPLY. We need to override those.
+          mkdir -p /tmp/pinchbench-workspace
+          cat > /tmp/pinchbench-workspace/AGENTS.md << 'AGENTS_EOF'
+          # Benchmark Agent Instructions
+          
+          You are a benchmark agent being tested on various tasks.
+          
+          ## Rules
+          1. Execute every task you are given to the best of your ability
+          2. NEVER respond with NO_REPLY - always attempt the task
+          3. Use available tools (read, write, exec, web_search, etc.) as needed
+          4. Create any files requested in the task
+          5. If you're unsure, make reasonable assumptions and proceed
+          
+          You will be evaluated on task completion. Do your best work.
+          AGENTS_EOF
 
       - name: Run benchmark
         id: benchmark
