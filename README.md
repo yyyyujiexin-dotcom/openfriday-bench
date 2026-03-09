@@ -1,19 +1,16 @@
-# 🦀 PinchBench
+# 🐾 OpenFriday Bench
 
 **Real-world benchmarks for AI coding agents**
 
-[![Leaderboard](https://img.shields.io/badge/leaderboard-pinchbench.com-blue)](https://pinchbench.com)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-PinchBench measures how well LLM models perform as the brain of an [OpenClaw](https://github.com/openclaw/openclaw) agent. Instead of synthetic tests, we throw real tasks at agents: scheduling meetings, writing code, triaging email, researching topics, and managing files.
+OpenFriday Bench measures how well LLM models perform as the brain of an [OpenClaw](https://github.com/openclaw/openclaw) agent. Instead of synthetic tests, we throw real tasks at agents: scheduling meetings, writing code, triaging email, researching topics, and managing files.
 
-Results are collected on a public leaderboard at **[pinchbench.com](https://pinchbench.com)**.
+Results are collected on a public leaderboard (coming soon).
 
-![PinchBench](pinchbench.png)
+## Why OpenFriday Bench?
 
-## Why PinchBench?
-
-Most LLM benchmarks test isolated capabilities. PinchBench tests what actually matters for coding agents:
+Most LLM benchmarks test isolated capabilities. OpenFriday Bench tests what actually matters for coding agents:
 
 - **Tool usage** — Can the model call the right tools with the right parameters?
 - **Multi-step reasoning** — Can it chain together actions to complete complex tasks?
@@ -23,9 +20,9 @@ Most LLM benchmarks test isolated capabilities. PinchBench tests what actually m
 ## Quick Start
 
 ```bash
-# Clone the skill
-git clone https://github.com/pinchbench/skill.git
-cd skill
+# Clone the benchmark
+git clone https://github.com/yyyyujiexin-dotcom/openfriday-bench.git
+cd openfriday-bench
 
 # Run benchmarks with your model of choice
 ./scripts/run.sh --model anthropic/claude-sonnet-4
@@ -41,7 +38,7 @@ cd skill
 
 ## What Gets Tested
 
-PinchBench includes 23 tasks across real-world categories:
+OpenFriday Bench includes tasks across real-world categories:
 
 | Category | Tasks | What's tested |
 |----------|-------|---------------|
@@ -58,17 +55,12 @@ Each task is graded automatically, by an LLM judge, or both — ensuring both ob
 
 ## Submitting Results
 
-To get your results on the leaderboard:
+TBD - Leaderboard coming soon!
 
 ```bash
-# Register for an API token (one-time)
-./scripts/run.sh --register
-
-# Run benchmark — results auto-upload with your token
-./scripts/run.sh --model anthropic/claude-sonnet-4
+# Run benchmark locally
+./scripts/run.sh --model anthropic/claude-sonnet-4 --no-upload
 ```
-
-Skip uploading with `--no-upload` if you just want local results.
 
 ## Command Reference
 
@@ -80,8 +72,6 @@ Skip uploading with `--no-upload` if you just want local results.
 | `--timeout-multiplier N` | Scale timeouts for slower models |
 | `--output-dir DIR` | Where to save results (default: `results/`) |
 | `--no-upload` | Skip uploading to leaderboard |
-| `--register` | Request an API token for submissions |
-| `--upload FILE` | Upload a previous results JSON |
 
 ## Contributing Tasks
 
@@ -94,9 +84,8 @@ We welcome new tasks! Check out [`tasks/TASK_TEMPLATE.md`](tasks/TASK_TEMPLATE.m
 
 ## Links
 
-- **Leaderboard:** [pinchbench.com](https://pinchbench.com)
 - **OpenClaw:** [github.com/openclaw/openclaw](https://github.com/openclaw/openclaw)
-- **Issues:** [github.com/pinchbench/skill/issues](https://github.com/pinchbench/skill/issues)
+- **Issues:** [github.com/yyyyujiexin-dotcom/openfriday-bench/issues](https://github.com/yyyyujiexin-dotcom/openfriday-bench/issues)
 
 ## License
 
@@ -104,4 +93,4 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
-*Claw-some AI agent testing* 🦞
+*OpenFriday Bench - Empowering AI agents with real-world testing* 🐾

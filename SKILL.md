@@ -1,16 +1,16 @@
 ---
-name: pinchbench
-description: Run PinchBench benchmarks to evaluate OpenClaw agent performance across real-world tasks. Use when testing model capabilities, comparing models, submitting benchmark results to the leaderboard, or checking how well your OpenClaw setup handles calendar, email, research, coding, and multi-step workflows.
+name: openfriday-bench
+description: Run OpenFriday Bench benchmarks to evaluate OpenClaw agent performance across real-world tasks. Use when testing model capabilities, comparing models, or checking how well your OpenClaw setup handles calendar, email, research, coding, and multi-step workflows.
 metadata:
-  author: pinchbench
+  author: yyyyujiexin-dotcom
   version: "1.0.0"
-  homepage: https://pinchbench.com
-  repository: https://github.com/pinchbench/skill
+  homepage: https://github.com/yyyyujiexin-dotcom/openfriday-bench
+  repository: https://github.com/yyyyujiexin-dotcom/openfriday-bench
 ---
 
-# PinchBench Benchmark Skill
+# OpenFriday Bench Benchmark Skill
 
-PinchBench measures how well LLM models perform as the brain of an OpenClaw agent. Results are collected on a public leaderboard at [pinchbench.com](https://pinchbench.com).
+OpenFriday Bench measures how well LLM models perform as the brain of an OpenClaw agent.
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ uv run benchmark.py --model anthropic/claude-sonnet-4 --suite task_01_calendar,t
 uv run benchmark.py --model anthropic/claude-sonnet-4 --no-upload
 ```
 
-## Available Tasks (23)
+## Available Tasks
 
 | Task | Category | Description |
 |------|----------|-------------|
@@ -50,19 +50,7 @@ uv run benchmark.py --model anthropic/claude-sonnet-4 --no-upload
 | `task_07_email` | Writing | Email drafting |
 | `task_08_memory` | Memory | Context retrieval |
 | `task_09_files` | Files | File structure creation |
-| `task_10_workflow` | Integration | Multi-step API workflow |
-| `task_11_clawdhub` | Skills | ClawHub interaction |
-| `task_12_skill_search` | Skills | Skill discovery |
-| `task_13_image_gen` | Creative | Image generation |
-| `task_14_humanizer` | Writing | Text humanization |
-| `task_15_daily_summary` | Productivity | Daily digest |
-| `task_16_email_triage` | Email | Inbox triage |
-| `task_17_email_search` | Email | Email search |
-| `task_18_market_research` | Research | Market analysis |
-| `task_19_spreadsheet_summary` | Analysis | Spreadsheet analysis |
-| `task_20_eli5_pdf_summary` | Analysis | PDF simplification |
-| `task_21_openclaw_comprehension` | Knowledge | OpenClaw docs comprehension |
-| `task_22_second_brain` | Memory | Knowledge management |
+| ... | ... | ... |
 
 ## Command Line Options
 
@@ -74,20 +62,6 @@ uv run benchmark.py --model anthropic/claude-sonnet-4 --no-upload
 | `--timeout-multiplier` | Scale task timeouts for slower models |
 | `--runs` | Number of runs per task for averaging |
 | `--no-upload` | Skip uploading to leaderboard |
-| `--register` | Request new API token for submissions |
-| `--upload FILE` | Upload previous results JSON |
-
-## Token Registration
-
-To submit results to the leaderboard:
-
-```bash
-# Register for an API token (one-time)
-uv run benchmark.py --register
-
-# Run benchmark (auto-uploads with token)
-uv run benchmark.py --model anthropic/claude-sonnet-4
-```
 
 ## Results
 
@@ -113,11 +87,3 @@ Create a markdown file in `tasks/` following `TASK_TEMPLATE.md`. Each task needs
 - Expected behavior
 - Grading criteria
 - Automated checks (Python grading function)
-
-## Leaderboard
-
-View results at [pinchbench.com](https://pinchbench.com). The leaderboard shows:
-
-- Model rankings by overall score
-- Per-task breakdowns
-- Historical performance trends
