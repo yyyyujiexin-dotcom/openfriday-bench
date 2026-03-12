@@ -1,0 +1,77 @@
+[
+  {
+    "task_id": "task_f_01_web_search",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_02_image_understand",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_03_video_understand",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_04_speech_to_text",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_05_pdf_parse",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_06_table_read",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_07_structured_output",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_08_markdown_output",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_09_realtime_voice",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_10_file_rw",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_11_cross_session",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_12_long_context",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_13_tool_chain",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_14_task_planning",
+    "status": "dry_run",
+    "scores": {}
+  },
+  {
+    "task_id": "task_f_15_doc_summary",
+    "status": "dry_run",
+    "scores": {}
+  }
+]

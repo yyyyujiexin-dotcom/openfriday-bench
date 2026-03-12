@@ -1,0 +1,25 @@
+# 运行时工作区（benchmark 自动创建）
+workspace/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
+
+# 环境与密钥（勿提交）
+.env
+.env.local
+*.local
+
+# 评测结果（可选：若希望提交示例结果可移除此行）
+results.json
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
