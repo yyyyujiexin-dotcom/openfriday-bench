@@ -1,0 +1,16 @@
+development:
+  adapter: postgresql
+  host: localhost
+  port: 5432
+  database: myapp_dev
+  username: devuser
+  password: dev_password_123
+
+test:
+  adapter: postgresql
+  host: localhost
+  port: 5432
+  database: myapp_test
+  username: devuser
+  password: dev_password_123
+
